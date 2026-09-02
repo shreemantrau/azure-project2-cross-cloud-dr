@@ -17,6 +17,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect Changed Paths
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'app/**'
+            web:
+              - 'web/**'
+
+      - name: Debug Path Detection
+        run: |
+          echo "app changed: ${{ steps.changes.outputs.app }}"
+          echo "web changed: ${{ steps.changes.outputs.web }}"
 
       - name: Azure Login
         uses: azure/login@v2
@@ -29,23 +46,23 @@ jobs:
         run: az acr login --name acrproj2dr
 
       - name: Build and Push App Tier Image
-        if: contains(github.event.head_commit.modified, 'app/') || contains(github.event.head_commit.added, 'app/')
+        if: steps.changes.outputs.app == 'true'
         working-directory: app
         run: |
           docker build --platform linux/amd64 -t acrproj2dr.azurecr.io/app-proj2dr-app:latest .
           docker push acrproj2dr.azurecr.io/app-proj2dr-app:latest
 
       - name: Build and Push Web Tier Image
-        if: contains(github.event.head_commit.modified, 'web/') || contains(github.event.head_commit.added, 'web/')
+        if: steps.changes.outputs.web == 'true'
         working-directory: web
         run: |
           docker build --platform linux/amd64 -t acrproj2dr.azurecr.io/app-proj2dr-web:latest .
           docker push acrproj2dr.azurecr.io/app-proj2dr-web:latest
 
       - name: Restart App Tier
-        if: contains(github.event.head_commit.modified, 'app/') || contains(github.event.head_commit.added, 'app/')
+        if: steps.changes.outputs.app == 'true'
         run: az webapp restart --name app-proj2dr-app --resource-group rg-project2-dr
 
       - name: Restart Web Tier
-        if: contains(github.event.head_commit.modified, 'web/') || contains(github.event.head_commit.added, 'web/')
+        if: steps.changes.outputs.web == 'true'
         run: az webapp restart --name app-proj2dr-web --resource-group rg-project2-dr
