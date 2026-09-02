@@ -20,5 +20,4 @@ provider "azurerm"{
 provider "aws"{
     region = "us-west-2"
   }
-# trigger workflow test
-# trigger workflow test 2
+
