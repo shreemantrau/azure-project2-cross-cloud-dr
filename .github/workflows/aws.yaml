@@ -1,0 +1,62 @@
+name: AWS Docker Build and Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'web/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect Changed Paths
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'app/**'
+            web:
+              - 'web/**'
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-west-2
+
+      - name: ECR Login
+        run: aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com
+
+      - name: Build and Push App Tier Image
+        if: steps.changes.outputs.app == 'true'
+        working-directory: app
+        run: |
+          docker build --platform linux/amd64 -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/proj2dr-app:latest .
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/proj2dr-app:latest
+
+      - name: Build and Push Web Tier Image
+        if: steps.changes.outputs.web == 'true'
+        working-directory: web
+        run: |
+          docker build --platform linux/amd64 -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/proj2dr-web:latest .
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com/proj2dr-web:latest
+
+      - name: Redeploy App Tier
+        if: steps.changes.outputs.app == 'true'
+        run: aws ecs update-service --cluster proj2dr-cluster --service proj2dr-app-service --force-new-deployment
+
+      - name: Redeploy Web Tier
+        if: steps.changes.outputs.web == 'true'
+        run: aws ecs update-service --cluster proj2dr-cluster --service proj2dr-web-service --force-new-deployment
