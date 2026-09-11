@@ -5,7 +5,7 @@ from flask import Flask, render_template
 app = Flask(__name__)
 
 APP_TIER_URL = os.environ.get("APP_TIER_URL", "http://localhost:5000")
-
+CLOUD_PROVIDER = os.environ.get("CLOUD_PROVIDER", "unknown")
 
 @app.route("/")
 def home():
@@ -15,7 +15,7 @@ def home():
     except Exception as e:
         app_status = {"status": "error", "message": str(e)}
 
-    return render_template("index.html", app_status=app_status)
+    return render_template("index.html", app_status=app_status, cloud_provider=CLOUD_PROVIDER)
 
 
 @app.route("/health")

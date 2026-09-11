@@ -27,7 +27,12 @@ resource "azurerm_subnet" "app" {
     name = "app-service-delegation"
     service_delegation {
       name = "Microsoft.Web/serverFarms"
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      
+      // actions field below intentionally omitted — tested and confirmed Azure auto-assigns
+      // the required subnet actions server-side based on service_delegation.name alone.
+      // Declaring actions here is redundant, not required. See: terraform-provider-azurerm
+      
+      #actions = ["Microsoft.Network/virtualNetworks/subnets/action"] 
     }
   }
 }

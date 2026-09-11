@@ -17,6 +17,7 @@ resource "azurerm_linux_web_app" "web" {
   //this way it can communicate with it. Similar to SQL link in app.app
   app_settings = {
     "APP_TIER_URL" = "https://${azurerm_linux_web_app.app.default_hostname}"
+    "CLOUD_PROVIDER" = "Azure"
   }
 
   identity {
@@ -56,6 +57,13 @@ resource "azurerm_linux_web_app" "app" {
     "SQL_DATABASE" = azurerm_mssql_database.main.name
     "SQL_USER" = azurerm_mssql_server.main.administrator_login
     "SQL_PASSWORD" = "@Microsoft.KeyVault(SecretUri=https://kv-proj2-dr.vault.azure.net/secrets/sql-admin-password/18509100ac4640378115b8874ee71e75)"
+    "AWS_ACCESS_KEY_ID"     = var.aws_access_key
+    "AWS_SECRET_ACCESS_KEY" = var.aws_secret_key
+    "SYNC_S3_BUCKET"        = aws_s3_bucket.sync.bucket
+    "RDS_HOST"              = split(":", aws_db_instance.main.endpoint)[0]
+    "RDS_DB"                = aws_db_instance.main.db_name
+    "RDS_USER"              = aws_db_instance.main.username
+    "RDS_PASSWORD"          = var.rds_password
   }
 
   site_config {
