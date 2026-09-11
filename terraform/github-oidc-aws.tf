@@ -10,10 +10,10 @@ resource "aws_iam_role" "github_actions" {
           Federated = "arn:aws:iam::966981264807:oidc-provider/token.actions.githubusercontent.com"
         }
         Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:sub" = "repo:shreemantrau/azure-project2-cross-cloud-dr:ref:refs/heads/main"
-          }
+       Condition = {
+                StringEquals = {
+                "token.actions.githubusercontent.com:sub" = "repo:shreemantrau@49795327/azure-project2-cross-cloud-dr@1355079911:ref:refs/heads/main"
+            }
         }
       }
     ]
